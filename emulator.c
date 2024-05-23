@@ -29,6 +29,21 @@ void load_program(const char *filename);
 void parse_instruction(char *line);
 int find_label_address(const char *label);
 void execute_program();
+int is_label(const char *instruction);
+void switch_instruction(Instruction *instr, int *pc, int reg1, int reg2);
+void load_instruction(int reg, const char *operand2);
+void add_instruction(int reg1, int reg2);
+void sub_instruction(int reg1, int reg2);
+void mul_instruction(int reg1, int reg2);
+void div_instruction(int reg1, int reg2);
+void mov_instruction(int reg1, int reg2);
+void jmp_instruction(const char *operand1, int *pc);
+void cmp_instruction(int reg1, int reg2);
+void jne_instruction(const char *operand1, int *pc);
+void jeq_instruction(const char *operand1, int *pc);
+void jgt_instruction(const char *operand1, int *pc);
+void jlt_instruction(const char *operand1, int *pc);
+void print_instruction(int reg);
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -101,65 +116,130 @@ void execute_program() {
     while (pc < instruction_count) {
         Instruction *instr = &instructions[pc];
         
-        if (strchr(instr->instruction, ':') != NULL) {
+        if (is_label(instr->instruction)) {
             pc++;
             continue;
         } 
         
         int reg1 = instr->operand1[1] - '0';
         int reg2 = instr->operand2[1] - '0';
-        if (strcmp(instr->instruction, "LOAD") == 0) {
-            registers[reg1] = atoi(instr->operand2);
-        } else if (strcmp(instr->instruction, "ADD") == 0) {
-            registers[reg1] += registers[reg2];
-        } else if (strcmp(instr->instruction, "SUB") == 0) {
-            registers[reg1] -= registers[reg2];
-        } else if (strcmp(instr->instruction, "MUL") == 0) {
-            registers[reg1] *= registers[reg2];
-        } else if (strcmp(instr->instruction, "DIV") == 0) {
-            if (registers[reg2] == 0) {
-                printf("Error: Division by zero\n");
-                exit(1);
-            }
-            registers[reg1] /= registers[reg2];
-        } else if (strcmp(instr->instruction, "MOV") == 0) {
-            registers[reg1] = registers[reg2];
-        } else if (strcmp(instr->instruction, "JMP") == 0) {
-            pc = find_label_address(instr->operand1);
-        } else if (strcmp(instr->instruction, "CMP") == 0) {
-            if (registers[reg1] == registers[reg2]) {
-                cmp_flag = 0;
-            } else if (registers[reg1] > registers[reg2]) {
-                cmp_flag = 1;
-            } else {
-                cmp_flag = -1;
-            }
-        } else if (strcmp(instr->instruction, "JNE") == 0) {
-            if(cmp_flag != 0){
-                pc = find_label_address(instr->operand1);
-            }
-        } else if (strcmp(instr->instruction, "JEQ") == 0) {
-            if(cmp_flag == 0){
-                pc = find_label_address(instr->operand1); 
-            }
-        } else if (strcmp(instr->instruction, "JGT") == 0) {
-            if(cmp_flag == 1){
-                pc = find_label_address(instr->operand1);
-            }
-        } else if (strcmp(instr->instruction, "JLT") == 0) {
-            if(cmp_flag == -1){
-                pc = find_label_address(instr->operand1);
-            }
-        } else if (strcmp(instr->instruction, "PRINT") == 0) {
-            printf("Value in R%d: %d\n", reg1, registers[reg1]);
-        } else {
-            printf("Error: Unknown instruction %s\n", instr->instruction);
-            exit(1);
-        }
+
+        switch_instruction(instr, &pc, reg1, reg2);
 
         pc++;
     }
+    print_registers();
+    
+}
 
+int is_label(const char *instruction) {
+    return strchr(instruction, ':') != NULL;
+}
+
+void switch_instruction(Instruction *instr, int *pc, int reg1, int reg2) {
+    if (strcmp(instr->instruction, "LOAD") == 0) {
+        load_instruction(reg1, instr->operand2);
+    } else if (strcmp(instr->instruction, "ADD") == 0) {
+        add_instruction(reg1, reg2);
+    } else if (strcmp(instr->instruction, "SUB") == 0) {
+        sub_instruction(reg1, reg2);
+    } else if (strcmp(instr->instruction, "MUL") == 0) {
+        mul_instruction(reg1, reg2);
+    } else if (strcmp(instr->instruction, "DIV") == 0) {
+        div_instruction(reg1, reg2);
+    } else if (strcmp(instr->instruction, "MOV") == 0) {
+        mov_instruction(reg1, reg2);
+    } else if (strcmp(instr->instruction, "JMP") == 0) {
+        jmp_instruction(instr->operand1, pc);
+    } else if (strcmp(instr->instruction, "CMP") == 0) {
+        cmp_instruction(reg1, reg2);
+    } else if (strcmp(instr->instruction, "JNE") == 0) {
+        jne_instruction(instr->operand1, pc);
+    } else if (strcmp(instr->instruction, "JEQ") == 0) {
+        jeq_instruction(instr->operand1, pc);
+    } else if (strcmp(instr->instruction, "JGT") == 0) {
+        jgt_instruction(instr->operand1, pc);
+    } else if (strcmp(instr->instruction, "JLT") == 0) {
+        jlt_instruction(instr->operand1, pc);
+    } else if (strcmp(instr->instruction, "PRINT") == 0) {
+        print_instruction(reg1);
+    } else {
+        printf("Error: Unknown instruction %s\n", instr->instruction);
+        exit(1);
+    }
+}
+
+void load_instruction(int reg, const char *operand){
+    registers[reg] = atoi(operand);
+}
+
+void add_instruction(int reg1, int reg2) {
+    registers[reg1] += registers[reg2];
+}
+
+void sub_instruction(int reg1, int reg2) {
+    registers[reg1] -= registers[reg2];
+}
+
+void mul_instruction(int reg1, int reg2) {
+    registers[reg1] *= registers[reg2];
+}
+
+void div_instruction(int reg1, int reg2) {
+    if (registers[reg2] == 0) {
+        printf("Error: Division by zero\n");
+        exit(1);
+    }
+    registers[reg1] /= registers[reg2];
+}
+
+void mov_instruction(int reg1, int reg2) {
+    registers[reg1] = registers[reg2];
+}
+
+void jmp_instruction(const char *operand1, int *pc) {
+    *pc = find_label_address(operand1);
+}
+
+void cmp_instruction(int reg1, int reg2) {
+    if (registers[reg1] == registers[reg2]) {
+        cmp_flag = 0;
+    } else if (registers[reg1] > registers[reg2]) {
+        cmp_flag = 1;
+    } else {
+        cmp_flag = -1;
+    }
+}
+
+void jne_instruction(const char *operand1, int *pc) {
+    if (cmp_flag != 0) {
+        *pc = find_label_address(operand1);
+    }
+}
+
+void jeq_instruction(const char *operand1, int *pc) {
+    if (cmp_flag == 0) {
+        *pc = find_label_address(operand1);
+    }
+}
+
+void jgt_instruction(const char *operand1, int *pc) {
+    if (cmp_flag == 1) {
+        *pc = find_label_address(operand1);
+    }
+}
+
+void jlt_instruction(const char *operand1, int *pc) {
+    if (cmp_flag == -1) {
+        *pc = find_label_address(operand1);
+    }
+}
+
+void print_instruction(int reg) {
+    printf("Value in R%d: %d\n", reg, registers[reg]);
+}
+
+void print_registers(){
     for (int i = 0; i < MAX_REGISTERS; i++) {
         printf("R%d = %d\n", i, registers[i]);
     }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Compile the emulator
-gcc -o emulator emulator.c
+gcc -w emulator.c -o emulator
 
 # Test function
 run_test() {
