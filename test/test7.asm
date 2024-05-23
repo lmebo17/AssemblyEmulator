@@ -1,0 +1,4 @@
+LOAD R0, 10
+LOAD R1, 2
+DIV R0, R1
+

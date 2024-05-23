@@ -1,0 +1,5 @@
+LOAD R2, 10
+LOAD R3, 20
+ADD R2, R3
+ADD R1, R2
+
