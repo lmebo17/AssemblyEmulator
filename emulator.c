@@ -23,7 +23,7 @@ Instruction instructions[MAX_LINES];
 Label labels[MAX_LABELS];
 int label_count = 0;
 int instruction_count = 0;
-int cmp_flag = 0; // 0: equal, 1: not equal
+int cmp_flag = 0;
 
 void load_program(const char *filename);
 void parse_instruction(char *line);
@@ -50,17 +50,18 @@ void load_program(const char *filename) {
     }
 
     char line[256];
+    instruction_count = 0;
     while (fgets(line, sizeof(line), file)) {
-        // Remove newline character
         line[strcspn(line, "\n")] = 0;
-
-        // Check if line is a label
         if (strchr(line, ':')) {
+            Instruction instr;
+            strcpy(instr.instruction, line);
+            instructions[instruction_count] = instr;
             char *label = strtok(line, ":");
             strcpy(labels[label_count].label, label);
-            labels[label_count].address = ++instruction_count;
+            labels[label_count].address = instruction_count;
             label_count++;
-        
+            instruction_count++;
         } else {
             parse_instruction(line);
         }
@@ -99,13 +100,14 @@ void execute_program() {
 
     while (pc < instruction_count) {
         Instruction *instr = &instructions[pc];
-        // printf("%s\n", instr->instruction);
+        
+        if (strchr(instr->instruction, ':') != NULL) {
+            pc++;
+            continue;
+        } 
+        
         int reg1 = instr->operand1[1] - '0';
         int reg2 = instr->operand2[1] - '0';
-        // if(strchr(instr->instruction, ':')){
-        //     pc++;
-        //     continue;
-        // }
         if (strcmp(instr->instruction, "LOAD") == 0) {
             registers[reg1] = atoi(instr->operand2);
         } else if (strcmp(instr->instruction, "ADD") == 0) {
@@ -138,14 +140,12 @@ void execute_program() {
             }
         } else if (strcmp(instr->instruction, "JEQ") == 0) {
             if(cmp_flag == 0){
-                pc = find_label_address(instr->operand1);
-                printf("%d\n", pc);
+                pc = find_label_address(instr->operand1); 
             }
         } else if (strcmp(instr->instruction, "JGT") == 0) {
             if(cmp_flag == 1){
                 pc = find_label_address(instr->operand1);
             }
-            printf("PC: %d\n", pc);
         } else if (strcmp(instr->instruction, "JLT") == 0) {
             if(cmp_flag == -1){
                 pc = find_label_address(instr->operand1);
@@ -160,7 +160,6 @@ void execute_program() {
         pc++;
     }
 
-    // Print register values after execution
     for (int i = 0; i < MAX_REGISTERS; i++) {
         printf("R%d = %d\n", i, registers[i]);
     }
