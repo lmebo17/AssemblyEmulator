@@ -21,6 +21,6 @@ run_test() {
 }
 
 # Test cases
-for ((i=1; i <= 10; i++)); do
+for ((i=1; i <= 11; i++)); do
     run_test "test/test${i}.asm" "cmp/expected${i}.txt"
 done

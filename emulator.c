@@ -6,6 +6,7 @@
 #define MAX_REGISTERS 10
 #define MAX_LINES 1000
 #define MAX_LABELS 100
+#define MEMORY_SIZE 1000
 
 typedef struct {
     char label[20];
@@ -24,6 +25,7 @@ Label labels[MAX_LABELS];
 int label_count = 0;
 int instruction_count = 0;
 int cmp_flag = 0;
+int memory[MEMORY_SIZE] = {0};
 
 void load_program(const char *filename);
 void parse_instruction(char *line);
@@ -37,6 +39,8 @@ void sub_instruction(int reg1, int reg2);
 void mul_instruction(int reg1, int reg2);
 void div_instruction(int reg1, int reg2);
 void mov_instruction(int reg1, int reg2);
+void store_instruction(int reg, int addr);
+void load_from_memory_instruction(int reg, int addr);
 void jmp_instruction(const char *operand1, int *pc);
 void cmp_instruction(int reg1, int reg2);
 void jne_instruction(const char *operand1, int *pc);
@@ -44,6 +48,7 @@ void jeq_instruction(const char *operand1, int *pc);
 void jgt_instruction(const char *operand1, int *pc);
 void jlt_instruction(const char *operand1, int *pc);
 void print_instruction(int reg);
+void print_registers();
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -129,7 +134,6 @@ void execute_program() {
         pc++;
     }
     print_registers();
-    
 }
 
 int is_label(const char *instruction) {
@@ -139,6 +143,10 @@ int is_label(const char *instruction) {
 void switch_instruction(Instruction *instr, int *pc, int reg1, int reg2) {
     if (strcmp(instr->instruction, "LOAD") == 0) {
         load_instruction(reg1, instr->operand2);
+    } else if (strcmp(instr->instruction, "STORE") == 0) {
+        store_instruction(reg1, atoi(instr->operand2));
+    } else if (strcmp(instr->instruction, "LOADM") == 0) {
+        load_from_memory_instruction(reg1, atoi(instr->operand2));
     } else if (strcmp(instr->instruction, "ADD") == 0) {
         add_instruction(reg1, reg2);
     } else if (strcmp(instr->instruction, "SUB") == 0) {
@@ -197,6 +205,22 @@ void mov_instruction(int reg1, int reg2) {
     registers[reg1] = registers[reg2];
 }
 
+void store_instruction(int reg, int addr) {
+    if (addr < 0 || addr >= MEMORY_SIZE) {
+        printf("Error: Memory address out of bounds %d\n", addr);
+        exit(1);
+    }
+    memory[addr] = registers[reg];
+}
+
+void load_from_memory_instruction(int reg, int addr) {
+    if (addr < 0 || addr >= MEMORY_SIZE) {
+        printf("Error: Memory address out of bounds %d\n", addr);
+        exit(1);
+    }
+    registers[reg] = memory[addr];
+}
+
 void jmp_instruction(const char *operand1, int *pc) {
     *pc = find_label_address(operand1);
 }
@@ -239,7 +263,7 @@ void print_instruction(int reg) {
     printf("Value in R%d: %d\n", reg, registers[reg]);
 }
 
-void print_registers(){
+void print_registers() {
     for (int i = 0; i < MAX_REGISTERS; i++) {
         printf("R%d = %d\n", i, registers[i]);
     }
