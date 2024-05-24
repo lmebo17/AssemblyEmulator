@@ -35,6 +35,7 @@ This is a simple assembly emulator implemented in C. It can execute assembly-lik
 - Conditional jumps (JMP, JNE, JEQ, JGT, JLT)
 - Comparison (CMP) to set a comparison flag
 - Register manipulation (LOAD, MOV)
+- Memory operations (STORE, LOADM)
 
 ## Contributing
 
