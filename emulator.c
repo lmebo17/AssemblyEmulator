@@ -49,6 +49,10 @@ void jgt_instruction(const char *operand1, int *pc);
 void jlt_instruction(const char *operand1, int *pc);
 void print_instruction(int reg);
 void print_registers();
+void and_instruction(int dest, int src1, int src2);
+void or_instruction(int dest, int src1, int src2);
+void xor_instruction(int dest, int src);
+void not_instruction(int dest, int src);
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -171,6 +175,14 @@ void switch_instruction(Instruction *instr, int *pc, int reg1, int reg2) {
         jlt_instruction(instr->operand1, pc);
     } else if (strcmp(instr->instruction, "PRINT") == 0) {
         print_instruction(reg1);
+    } else if (strcmp(instr->instruction, "AND") == 0) {
+        and_instruction(reg1, reg1, reg2);
+    } else if (strcmp(instr->instruction, "OR") == 0) {
+        or_instruction(reg1, reg1, reg2);
+    } else if (strcmp(instr->instruction, "XOR") == 0) {
+        xor_instruction(reg1, reg2);
+    } else if (strcmp(instr->instruction, "NOT") == 0) {
+        not_instruction(reg1, reg1);
     } else {
         printf("Error: Unknown instruction %s\n", instr->instruction);
         exit(1);
@@ -267,4 +279,20 @@ void print_registers() {
     for (int i = 0; i < MAX_REGISTERS; i++) {
         printf("R%d = %d\n", i, registers[i]);
     }
+}
+
+void and_instruction(int dest, int src1, int src2) {
+    registers[dest] = registers[src1] & registers[src2];
+}
+
+void or_instruction(int dest, int src1, int src2) {
+    registers[dest] = registers[src1] | registers[src2];
+}
+
+void xor_instruction(int dest, int src) {
+    registers[dest] = registers[dest] ^ registers[src];
+}
+
+void not_instruction(int dest, int src) {
+    registers[dest] = ~registers[src];
 }
